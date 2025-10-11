@@ -13,3 +13,6 @@ transformers
 psycopg2
 sentence_transformers
 pgvector
+accelerate
+groq
+google-generativeai
