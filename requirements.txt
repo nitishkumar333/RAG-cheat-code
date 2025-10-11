@@ -1,0 +1,15 @@
+sqlalchemy
+langchain
+langchain-community
+langchain-core
+langchain-google-community
+langchain-huggingface
+langchain-text-splitters
+langchain_community
+langchain_core
+langchain_google_genai
+torch
+transformers
+psycopg2
+sentence_transformers
+pgvector
