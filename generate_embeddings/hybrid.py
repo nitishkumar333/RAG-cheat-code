@@ -2,7 +2,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, TextLoader, UnstructuredMarkdownLoader
 from dotenv import load_dotenv
 from langchain.schema import Document
-from .models_sql import Document, KnowledgeBase, create_document_with_embeddings, search_documents
+from .models import Document, KnowledgeBase, create_document_with_embeddings, search_documents
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 from sentence_transformers import SentenceTransformer
 from pgvector.sqlalchemy import SparseVector
