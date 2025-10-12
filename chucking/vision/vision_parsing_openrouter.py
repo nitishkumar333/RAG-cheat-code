@@ -1,22 +1,27 @@
 import base64, os
-from groq import Groq
+from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
 
-# Function to encode the image
-def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ['OPENROUTER_API_KEY'],
+)
 
-# Path to your image
+# Path to your local image
 image_path = "TM_Midea_R291.jpg"
 
-# Getting the base64 string
-base64_image = encode_image(image_path)
+# Read and encode the image to base64
+with open(image_path, "rb") as f:
+    image_bytes = f.read()
+    base64_image = base64.b64encode(image_bytes).decode("utf-8")
 
-client = Groq(api_key=os.environ['GROQ_API_KEY'])
+# Create the data URL for the image
+image_data_url = f"data:image/jpg;base64,{base64_image}"
 
-chat_completion = client.chat.completions.create(
+# Send it to the model
+completion = client.chat.completions.create(
+    model="qwen/qwen2.5-vl-32b-instruct:free",
     messages=[
         {
             "role": "user",
@@ -40,16 +45,10 @@ chat_completion = client.chat.completions.create(
 **Exclusions:** Ignore any watermarks, logos, page artifacts, page number or stamps that are not part of the original document's content.
 
 When you output the recreated document, present it as a single continuous Markdown document that follows these rules exactly."""},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpg;base64,{base64_image}",
-                    },
-                },
+                {"type": "image_url", "image_url": {"url": image_data_url}},
             ],
         }
     ],
-    model="meta-llama/llama-4-maverick-17b-128e-instruct",
 )
 
-print(chat_completion.choices[0].message.content)
+print(completion.choices[0].message.content)

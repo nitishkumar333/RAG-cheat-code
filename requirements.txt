@@ -16,3 +16,4 @@ pgvector
 accelerate
 groq
 google-generativeai
+openai

@@ -1,7 +1,10 @@
 import google.generativeai as genai
 from PIL import Image
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
-genai.configure(api_key="api_key")
+genai.configure(api_key=os.environ['GEMINI_API_KEY'])
 
 # --- Image and Prompt Definition ---
 # Path to your image
@@ -16,38 +19,28 @@ except FileNotFoundError:
 
 # The text prompt remains the same
 prompt = """
-Analyze this image thoroughly and provide ALL information contained in it:
+## Guidelines
 
-TEXT EXTRACTION: Extract ALL text exactly as it appears, including:
-   - Headings, titles, and subtitles
-   - Body text and paragraphs
-   - Labels and captions
-   - Preserve formatting, line breaks, and structure
+1. **Tables**
+   Analyze the tables and reconstruct it with more clear headings, relationships and context. Remove any grouped headers and make it flattened with single-level headers. Also, prefill any empty cell. You can add or remove any column in the table to make the data more clear.
 
-TABLES: If tables are present:
-   - Describe the table structure (rows × columns)
-   - Preserve headers and data relationships
-   - Fill the cells where needed, don't left cells empty. Each row and coloumn should be complete even if data is repeating.
-   - Format as structured markdown
+2. **Textual Content**
+   Transcribe **ALL** text verbatim. This includes titles, headings, paragraphs, lists, captions, and any other text. Faithfully preserve all original formatting such as **bolding**, *italics*, *underlining*, and specific line breaks.
 
-DIAGRAMS & CHARTS: If present:
-   - Extract all labels, values, and legends
-   - Describe relationships and flow
-   - Complete Information they convey
+3. **Visual Elements (Diagrams, Charts, Graphs)**
+   Where a visual element appears in the original, replace it with a comprehensive and descriptive paragraph. This description must detail all labels, values, connections, flows, and the core information the visual is conveying.
 
-Exclude any watermarks or stamps.
-Do not summarize or skip any content.
+## Crucial Constraints
+
+**NO Analytical Headings:** Do not use sections or headings like "Text Extraction," "Table Analysis," or "Diagram Description." The entire response must be a single, flowing document.
+**Completeness:** Be exhaustive. Do not summarize, omit, or paraphrase any content.
+**Exclusions:** Ignore any watermarks, logos, page artifacts, page number or stamps that are not part of the original document's content.
+
+When you output the recreated document, present it as a single continuous Markdown document that follows these rules exactly.
 """
 
-# --- Model Interaction ---
-# Initialize the Gemini 1.5 Pro model
-# 'gemini-1.5-pro-latest' is excellent for multimodal tasks (text and images)
 model = genai.GenerativeModel('gemini-2.5-pro')
 
-# The model takes a list containing the prompt and the image object(s)
 response = model.generate_content([prompt, img])
 
-
-# --- Output ---
-# Print the extracted text from the model's response
 print(response.text)
