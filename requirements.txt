@@ -17,3 +17,4 @@ accelerate
 groq
 google-generativeai
 openai
+pdf2image

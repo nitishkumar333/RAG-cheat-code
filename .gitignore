@@ -3,3 +3,4 @@ venv/
 *.png
 *.jpeg
 .env
+*.pdf
