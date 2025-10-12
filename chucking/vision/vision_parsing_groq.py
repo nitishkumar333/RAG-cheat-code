@@ -3,53 +3,67 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-# Function to encode the image
-def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
+class GroqImageAnalyzer:
+    def __init__(self, api_key: str, model_name: str = 'meta-llama/llama-4-maverick-17b-128e-instruct'):
+        self.api_key = api_key
+        self.model_name = model_name
+        self.model = Groq(api_key=os.environ['GROQ_API_KEY'])
 
-# Path to your image
-image_path = "TM_Midea_R291.jpg"
+    def analyze_table(self, image_path: str):
+        """
+        Analyze the image at the given path with the provided prompt.
+        """
+        prompt = """
+        ## Guidelines
 
-# Getting the base64 string
-base64_image = encode_image(image_path)
+        1. **Tables**
+            Analyze the tables and reconstruct it with more clear headings, relationships and context. Remove any grouped headers and make it flattened with single-level headers. Also, prefill any empty cell. You can add or remove any column in the table to make the data more clear.
 
-client = Groq(api_key=os.environ['GROQ_API_KEY'])
+        2. **Textual Content**
+            Transcribe **ALL** text verbatim. This includes titles, headings, paragraphs, lists, captions, and any other text. Faithfully preserve all original formatting such as **bolding**, *italics*, *underlining*, and specific line breaks.
 
-chat_completion = client.chat.completions.create(
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": """
-## Guidelines
+        3. **Visual Elements (Diagrams, Charts, Graphs)**
+            Where a visual element appears in the original, replace it with a comprehensive and descriptive paragraph. This description must detail all labels, values, connections, flows, and the core information the visual is conveying.
 
-1. **Tables**
-   Analyze the tables and reconstruct it with more clear headings, relationships and context. Remove any grouped headers and make it flattened with single-level headers. Also, prefill any empty cell. You can add or remove any column in the table to make the data more clear.
+        ## Crucial Constraints
 
-2. **Textual Content**
-   Transcribe **ALL** text verbatim. This includes titles, headings, paragraphs, lists, captions, and any other text. Faithfully preserve all original formatting such as **bolding**, *italics*, *underlining*, and specific line breaks.
+        **NO Analytical Headings:** Do not use sections or headings like "Text Extraction," "Table Analysis," or "Diagram Description." The entire response must be a single, flowing document.
+        **Completeness:** Be exhaustive. Do not summarize, omit, or paraphrase any content.
+        **Exclusions:** Ignore any watermarks, logos, page artifacts, page number or stamps that are not part of the original document's content.
 
-3. **Visual Elements (Diagrams, Charts, Graphs)**
-   Where a visual element appears in the original, replace it with a comprehensive and descriptive paragraph. This description must detail all labels, values, connections, flows, and the core information the visual is conveying.
+        When you output the recreated document, present it as a single continuous Markdown document that follows these rules exactly.
+        """
+        def encode_image(image_path):
+            with open(image_path, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode('utf-8')
 
-## Crucial Constraints
-
-**NO Analytical Headings:** Do not use sections or headings like "Text Extraction," "Table Analysis," or "Diagram Description." The entire response must be a single, flowing document.
-**Completeness:** Be exhaustive. Do not summarize, omit, or paraphrase any content.
-**Exclusions:** Ignore any watermarks, logos, page artifacts, page number or stamps that are not part of the original document's content.
-
-When you output the recreated document, present it as a single continuous Markdown document that follows these rules exactly."""},
+        base64_image = encode_image(image_path)
+        chat_completion = self.model.chat.completions.create(
+            messages=[
                 {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpg;base64,{base64_image}",
-                    },
-                },
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpg;base64,{base64_image}",
+                            },
+                        },
+                    ],
+                }
             ],
-        }
-    ],
-    model="meta-llama/llama-4-maverick-17b-128e-instruct",
-)
+            model=self.model_name,
+        )
+        return chat_completion.choices[0].message.content
 
-print(chat_completion.choices[0].message.content)
+if __name__ == "__main__":
+   image_path = "TM_Midea_R291.jpg"
+
+   analyzer = GroqImageAnalyzer(api_key=os.environ['GROQ_API_KEY'])
+
+   try:
+      result = analyzer.analyze_table(image_path)
+      print(result)
+   except Exception as e:
+      print(f"Error: {e}")
