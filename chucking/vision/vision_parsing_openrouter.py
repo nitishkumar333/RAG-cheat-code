@@ -36,6 +36,10 @@ class OpenRouterImageAnalyzer:
 
         When you output the recreated document, present it as a single continuous Markdown document that follows these rules exactly.
         """
+
+        if not os.path.exists(image_path):
+            return f"Error: Image path not found at '{image_path}'"
+
         def encode_image(image_path):
             with open(image_path, "rb") as image_file:
                 return base64.b64encode(image_file.read()).decode('utf-8')
