@@ -1,6 +1,7 @@
 from pdf2image import convert_from_path
-import os
+import os, time
 from vision.gemini_parsing import GeminiImageAnalyzer
+from chucking.contextualize_chunks import ContextualRetrieval
 
 def process_pdf(pdf_path, output_dir="pdf_images"):
     os.makedirs(output_dir, exist_ok=True)
@@ -16,17 +17,22 @@ def process_pdf(pdf_path, output_dir="pdf_images"):
             result = analyzer.analyze_table(image_path)
             results.append(result)
         finally:
-            if os.path.exists(image_path):
-                os.remove(image_path)
-                print(f"[CLEANUP] Deleted temporary file: {image_path}")
-
+            pass
+            # if os.path.exists(image_path):
+            #     os.remove(image_path)
+            #     print(f"[CLEANUP] Deleted temporary file: {image_path}")
+        time.sleep(15)
         print(f"[INFO] Processed page {i}")
 
     # Optional: Remove the folder if it's empty
-    if not os.listdir(output_dir):
-        os.rmdir(output_dir)
-        print(f"[CLEANUP] Removed empty folder: {output_dir}")
+    # if not os.listdir(output_dir):
+    #     os.rmdir(output_dir)
+    #     print(f"[CLEANUP] Removed empty folder: {output_dir}")
 
     return results
 
-print(process_pdf("temp.pdf"))
+docs = process_pdf("temp.pdf")
+full_doc = " ".join(docs)
+
+chunker = ContextualRetrieval(full_document=full_doc, api_key=os.environ['GEMINI_API_KEY'])
+chunker.process_document()
