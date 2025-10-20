@@ -4,3 +4,5 @@ venv/
 *.jpeg
 .env
 *.pdf
+*.pyc
+*.ipynb
