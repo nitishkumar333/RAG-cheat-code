@@ -6,3 +6,5 @@ venv/
 *.pdf
 *.pyc
 *.ipynb
+node_modules
+node_modules/
