@@ -4,12 +4,22 @@ from fastapi.responses import JSONResponse
 from vision.gemini_parsing import GeminiImageAnalyzer
 from chunking.contextualize_chunks import ContextualRetrieval
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="PDF Processing API")
+origins = [
+    "http://localhost:5173",  # Vite default
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],       # allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],       # allow all headers
+)
 
-@app.post("/process-pdf")
+@app.post("/pdf-chunks")
 async def process_pdf(file: UploadFile = File(...)):
-
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
     
@@ -21,7 +31,7 @@ async def process_pdf(file: UploadFile = File(...)):
         os.makedirs(output_dir, exist_ok=True)
         try:
             # Convert PDF to images
-            pages = convert_from_path(pdf_path)
+            pages = convert_from_path(pdf_path, poppler_path="C:\\Users\\aenit\\Downloads\\Release-25.07.0-0\\poppler-25.07.0\\Library\\bin")
             results = []
             for i, page in enumerate(pages, start=1):
                 image_path = os.path.join(output_dir, f"page_{i}.png")
@@ -40,9 +50,13 @@ async def process_pdf(file: UploadFile = File(...)):
             full_doc = " ".join(results)
             chunker = ContextualRetrieval(full_document=full_doc, api_key=os.environ['GEMINI_API_KEY'])
             chunks = chunker.process_document()
-            return JSONResponse(content={"status": "success", "chunks": chunks})
+            return JSONResponse(content={"status": "success", "chunks": [
+                {"page_content": c.page_content, "metadata": c.metadata}
+                for c in chunks
+            ]})
 
         except Exception as e:
+            print(e)
             raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
